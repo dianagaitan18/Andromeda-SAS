@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Andrómeda · Prototipo PMV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: producto de software listo para usar, sobrio y preciso, para gerentes de pymes.
+   IDEA: un observatorio de datos: los datos crudos entran como polvo de estrellas y salen como una galaxia ordenada.
+   PICTURE: la propia aplicación con sus cuatro módulos funcionando; el logo espiral de Andrómeda como sello.
+   COLOUR and TYPE: mar profundo #0a2540, cielo #8fd3ff, blanco, rosa señal #ff5c8a; Hanken Grotesk 300 grande + 400/600.
+   LAYOUT: barra de marca, flujo de 4 módulos como navegación, panel de trabajo a todo el ancho. */
+:root{color-scheme:dark;--bg:#0a2540;--panel:#10304f;--line:#24496e;--ink:#f4f8fc;--mute:#a9c1d8;--sky:#8fd3ff;--pink:#ff5c8a;--ok:#7be0b5}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Hanken Grotesk",system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(20px,3vw,40px) max(4vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+header.band{padding-bottom:12px}
+.brand{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand svg{width:52px;height:52px;flex:none}
+h1{font-weight:300;font-size:clamp(30px,4.4vw,48px);line-height:1.05;margin:0;text-wrap:balance}
+h1 b{font-weight:800}
+.sub{color:var(--mute);margin:6px 0 0}
+h2{font-weight:600;font-size:clamp(22px,2.6vw,30px);line-height:1.15;margin:0 0 6px;text-wrap:balance}
+h3{font-size:17px;margin:0 0 8px;font-weight:600}
+p{margin:0 0 10px}
+.mute{color:var(--mute)}
+.small{font-size:13px;color:var(--mute)}
+nav.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:18px}
+nav.flow a{display:block;padding:12px 14px;border:1px solid var(--line);border-radius:12px;color:var(--ink);text-decoration:none;background:#0d2c4a;position:relative;min-height:64px}
+nav.flow a b{display:block;font-size:17px}
+nav.flow a span{font-size:13px;color:var(--mute)}
+nav.flow a[aria-current=page]{background:var(--sky);color:#06213a;border-color:var(--sky)}
+nav.flow a[aria-current=page] span{color:#0a3a5e}
+nav.flow a .dot{position:absolute;top:12px;right:12px;width:10px;height:10px;border-radius:50%;background:var(--line)}
+nav.flow a.done .dot{background:var(--ok)}
+.source{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-top:14px;font-size:14px;color:var(--mute)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:14px 0}
+.kpi{background:#0d2c4a;border:1px solid var(--line);border-radius:12px;padding:14px}
+.kpi .v{font-size:clamp(22px,2.4vw,28px);font-weight:600;white-space:nowrap}
+.kpi .l{font-size:13px;color:var(--mute)}
+.up{color:var(--ok)}.down{color:var(--pink)}
+button,.btn,select,input[type=file]::file-selector-button{font:inherit;font-size:16px;border-radius:10px;min-height:44px;padding:8px 16px;cursor:pointer}
+button,.btn{background:var(--pink);color:#2a0612;border:0;font-weight:600}
+button.ghost,.btn.ghost{background:transparent;color:var(--sky);border:1px solid var(--sky)}
+select{background:#0d2c4a;color:var(--ink);border:1px solid var(--line)}
+:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{color:var(--mute);font-weight:600}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+td.bad{background:rgba(255,92,138,.18);color:#ffc2d3}
+td.fix{background:rgba(123,224,181,.16);color:#c9f5e3}
+.steps{list-style:none;padding:0;margin:0}
+.steps li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:8px;align-items:start;padding:9px 0;border-bottom:1px solid var(--line)}
+.steps li i{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);margin-top:3px}
+.steps li.ok i{background:var(--ok);border-color:var(--ok)}
+.steps li .c{font-weight:600;white-space:nowrap}
+.meter{height:12px;border-radius:6px;background:#0b2238;overflow:hidden;margin:6px 0 2px}
+.meter div{height:100%;background:var(--pink);transition:width .6s}
+.meter.good div{background:var(--ok)}
+.bars .b{display:grid;grid-template-columns:minmax(90px,9em) minmax(0,1fr) auto;gap:10px;align-items:center;margin:7px 0;font-size:14px}
+.bars .t{height:14px;border-radius:7px;background:#0b2238;overflow:hidden}
+.bars .t div{height:100%;background:var(--sky)}
+.bars .b.hl .t div{background:var(--pink)}
+.bars .b span:last-child{white-space:nowrap;font-variant-numeric:tabular-nums}
+.fig{position:relative;min-height:340px}
+.fig>svg{position:absolute;inset:0;width:100%;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--mute);margin-top:6px}
+.legend i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:6px}
+.gate{text-align:center;padding:48px 16px}
+.memo{background:#f4f8fc;color:#10243a;border-radius:14px;padding:clamp(18px,3vw,36px);max-width:860px}
+.memo h2{color:#0a2540}
+.memo h3{color:#0a2540;margin-top:18px}
+.memo ul{padding-left:20px;margin:6px 0}
+.memo li{margin:6px 0}
+.memo .small{color:#4a6580}
+[hidden]{display:none!important}
+footer{color:var(--mute);font-size:13px}
+@media(max-width:820px){.g2{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){nav.flow{grid-template-columns:repeat(2,minmax(0,1fr))}table{font-size:13px}.fig{min-height:280px}}
+@media(prefers-reduced-motion:reduce){.meter div{transition:none}}
+</style>
+</head>
+<body>
+<header class="band"><div class="wrap">
+  <div class="brand">
+    <svg viewBox="0 0 64 64" aria-hidden="true"><defs><radialGradient id="cg"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#ffd1de"/><stop offset="1" stop-color="#ff5c8a" stop-opacity="0"/></radialGradient></defs>
+      <g fill="none" stroke-linecap="round"><ellipse cx="32" cy="32" rx="29" ry="12" stroke="#8fd3ff" stroke-width="2" transform="rotate(-28 32 32)" opacity=".55"/><ellipse cx="32" cy="32" rx="20" ry="8" stroke="#8fd3ff" stroke-width="2.5" transform="rotate(-28 32 32)"/><path d="M14 40c8 4 22 2 30-8" stroke="#ff5c8a" stroke-width="2.5"/></g>
+      <circle cx="32" cy="32" r="11" fill="url(#cg)"/><circle cx="51" cy="17" r="1.6" fill="#fff"/><circle cx="9" cy="47" r="1.2" fill="#fff"/></svg>
+    <div><h1><b>Andrómeda</b> · plataforma de analítica para pymes</h1>
+    <p class="sub">Prototipo del Producto Mínimo Viable: los cuatro módulos funcionando sobre los datos de un cliente.</p></div>
+  </div>
+  <nav class="flow" aria-label="Módulos">
+    <a href="#data-prep" data-v="data-prep"><i class="dot"></i><b>Data Prep</b><span>Limpieza y preparación</span></a>
+    <a href="#predict" data-v="predict"><i class="dot"></i><b>Predict</b><span>Pronóstico de ventas</span></a>
+    <a href="#bi" data-v="bi"><i class="dot"></i><b>BI</b><span>Tablero de indicadores</span></a>
+    <a href="#story" data-v="story"><i class="dot"></i><b>Story</b><span>Informe para la gerencia</span></a>
+  </nav>
+  <div class="source"><span id="srcLabel"></span>
+    <label class="btn ghost" for="csv" style="display:inline-flex;align-items:center">Cargar mi CSV</label><input type="file" id="csv" accept=".csv,text/csv">
+    <button class="ghost" id="reset" type="button">Usar datos de ejemplo</button>
+  </div>
+  <p class="small" id="csvMsg">Formato del CSV: columnas fecha, sede, producto, unidades, valor (separadas por coma o punto y coma).</p>
+</div></header>
+
+<main class="band" style="padding-top:8px"><div class="wrap">
+
+<section id="v-data-prep">
+  <h2 id="dpTitle"></h2>
+  <p class="mute">Andrómeda Data Prep revisa cada registro, detecta errores de digitación y los corrige con reglas trazables antes de cualquier análisis.</p>
+  <div class="grid g2">
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px">
+        <h3 id="tblTitle" style="margin:0">Datos crudos</h3>
+        <select id="tblFilter" aria-label="Filtro de filas"><option value="bad">Solo filas con problemas</option><option value="all">Todas las filas</option></select>
+      </div>
+      <div class="scroll"><table id="tbl"></table></div>
+      <p class="small" id="tblNote" style="margin-top:8px"></p>
+    </div>
+    <div class="card">
+      <h3>Calidad de los datos</h3>
+      <div class="row" style="justify-content:space-between"><span>Registros válidos</span><b id="qPct"></b></div>
+      <div class="meter" id="qMeter"><div></div></div>
+      <p class="small" id="qNote"></p>
+      <ul class="steps" id="steps"></ul>
+      <div class="row" style="margin-top:14px"><button id="runClean" type="button">Ejecutar limpieza</button><button class="ghost" id="toPredict" type="button" hidden>Continuar a Predict</button></div>
+    </div>
+  </div>
+</section>
+
+<section id="v-predict" hidden>
+  <div class="gate card" id="gP"><h2>Primero hay que limpiar los datos</h2><p class="mute">Predict trabaja solo con datos validados por Data Prep.</p><button type="button" class="cleanGo">Limpiar y continuar</button></div>
+  <div id="pBody" hidden>
+    <h2 id="pTitle"></h2>
+    <p class="mute">Andrómeda Predict ajusta un modelo de tendencia con estacionalidad mensual y lo valida con los últimos 6 meses reales antes de pronosticar.</p>
+    <div class="row"><select id="pProd" aria-label="Producto"></select><select id="pH" aria-label="Horizonte"><option value="3">3 meses</option><option value="6" selected>6 meses</option><option value="12">12 meses</option></select></div>
+    <div class="kpis" id="pK"></div>
+    <div class="card"><div class="fig" id="pFig"><svg></svg></div>
+      <div class="legend"><span><i style="background:#8fd3ff"></i>Ventas reales</span><span><i style="background:#ff5c8a"></i>Pronóstico</span><span><i style="background:rgba(255,92,138,.3);height:10px"></i>Rango probable (90 %)</span></div></div>
+    <div class="card" style="margin-top:14px"><h3>Detalle del pronóstico</h3><div class="scroll"><table id="pTbl"></table></div></div>
+  </div>
+</section>
+
+<section id="v-bi" hidden>
+  <div class="gate card" id="gB"><h2>Primero hay que limpiar los datos</h2><p class="mute">El tablero se alimenta de los datos validados.</p><button type="button" class="cleanGo">Limpiar y continuar</button></div>
+  <div id="bBody" hidden>
+    <h2 id="bTitle"></h2>
+    <div class="row"><select id="bYear" aria-label="Año"></select><select id="bSede" aria-label="Sede"></select></div>
+    <div class="kpis" id="bK"></div>
+    <div class="grid g2">
+      <div class="card"><h3 id="bChartT">Ventas por mes</h3><div class="fig" id="bFig"><svg></svg></div>
+        <div class="legend"><span><i style="background:#8fd3ff"></i><span id="lgA"></span></span><span><i style="background:#ff5c8a"></i><span id="lgB"></span></span></div></div>
+      <div class="card"><h3>Ventas por producto</h3><div class="bars" id="bProd"></div><h3 style="margin-top:18px">Ventas por sede</h3><div class="bars" id="bSedeBars"></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="v-story" hidden>
+  <div class="gate card" id="gS"><h2>Primero hay que limpiar los datos</h2><p class="mute">El informe se construye con los resultados de los otros módulos.</p><button type="button" class="cleanGo">Limpiar y continuar</button></div>
+  <div id="sBody" hidden>
+    <div class="row" style="justify-content:space-between;margin-bottom:12px"><p class="mute" style="margin:0">Andrómeda Story traduce los resultados en un informe que la gerencia lee en dos minutos.</p><button class="ghost" id="copy" type="button">Copiar informe</button></div>
+    <article class="memo" id="memo"></article>
+  </div>
+</section>
+
+</div></main>
+<footer class="band"><div class="wrap">Andrómeda SAS · Prototipo académico del PMV · Los datos de ejemplo corresponden a una distribuidora ficticia de Tunja y no a un cliente real.</div></footer>
+
+<script>
+{
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const MESL=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const cop=new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0});
+const num=new Intl.NumberFormat('es-CO',{maximumFractionDigits:0});
+const M=v=>'$ '+(v/1e6).toLocaleString('es-CO',{minimumFractionDigits:1,maximumFractionDigits:1})+' M';
+const pct=(v,d=1)=>(v>0?'+':'')+(v*100).toLocaleString('es-CO',{maximumFractionDigits:d})+' %';
+const pc1=v=>Math.abs(v*100).toLocaleString('es-CO',{maximumFractionDigits:1})+' %';
+const ymLabel=ym=>MES[+ym.slice(5)-1]+' '+ym.slice(2,4);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- datos de ejemplo ---------- */
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function sample(){
+  const R=rng(2026),rows=[],SW=[.86,.9,.97,1,1.02,1.08,1.1,1,.97,1,1.06,1.32],SF={Tunja:1,Duitama:.72,Sogamoso:.58};
+  const P=[['Café',18000,420,.016],['Panela',4500,1500,.006],['Lácteos',6200,1100,.012],['Papa criolla',3500,1700,.004],['Arepas boyacenses',2600,2100,.019]];
+  let t=0;for(let y=2024;y<=2026;y++)for(let m=1;m<=12;m++){if(y===2026&&m>9)break;const ym=y+'-'+String(m).padStart(2,'0');
+    for(const s in SF)for(const [n,p,b,g] of P){const u=Math.round(b*SF[s]*SW[m-1]*(1+g*t)*(.92+R()*.16));rows.push({fecha:ym,sede:s,producto:n,unidades:u,valor:u*p})}t++}
+  const pick=()=>rows[Math.floor(R()*rows.length)];
+  for(let i=0;i<22;i++){const r=pick(),[y,m]=r.fecha.split('-');r.fecha=i%2?String(1+Math.floor(R()*27)).padStart(2,'0')+'/'+m+'/'+y:MES[m-1]+'-'+y}
+  const V={Tunja:['tunja','TUNJA ',' Tunja.'],Duitama:['duitama','DUITAMA'],Sogamoso:['sogamoso ','Sogamoso.']};
+  for(let i=0;i<26;i++){const r=pick();if(V[r.sede])r.sede=V[r.sede][Math.floor(R()*V[r.sede].length)]}
+  for(let i=0;i<9;i++)pick().unidades=null;
+  for(let i=0;i<7;i++){const r=pick();if(r.unidades!=null)r.valor=null}
+  for(let i=0;i<4;i++){const r=pick();if(r.unidades)r.unidades=-r.unidades}
+  for(let i=0;i<3;i++){const r=pick();if(r.unidades>0&&r.valor)r.unidades*=100}
+  for(let i=0;i<14;i++){const k=Math.floor(R()*rows.length);rows.splice(k+1,0,{...rows[k]})}
+  return rows.map((r,i)=>({id:i+1,...r}));
+}
+
+/* ---------- Data Prep ---------- */
+const keyOf=s=>String(s??'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9 ]/g,'').trim().replace(/\s+/g,' ');
+function parseDate(f){f=String(f??'').trim();let m;
+  if(m=f.match(/^(\d{4})-(\d{1,2})(-\d{1,2})?$/))return m[1]+'-'+m[2].padStart(2,'0');
+  if(m=f.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/))return m[3]+'-'+m[2].padStart(2,'0');
+  if(m=f.toLowerCase().match(/^([a-z]{3})[a-z]*[-\s/](\d{4})$/)){const i=MES.indexOf(m[1]);if(i>=0)return m[2]+'-'+String(i+1).padStart(2,'0')}
+  return null}
+function canon(rows,field){const g={};for(const r of rows){const k=keyOf(r[field]);if(!k)continue;const c=String(r[field]).trim().replace(/\.$/,'');(g[k]=g[k]||{})[c]=(g[k][c]||0)+1}
+  const out={};for(const k in g){const best=Object.entries(g[k]).sort((a,b)=>b[1]-a[1]||(/^[A-ZÁÉÍÓÚ][a-záéíóúñ]/.test(b[0])-/^[A-ZÁÉÍÓÚ][a-záéíóúñ]/.test(a[0])))[0][0];out[k]=best}return out}
+const med=a=>{a=[...a].sort((x,y)=>x-y);const h=a.length>>1;return a.length?(a.length%2?a[h]:(a[h-1]+a[h])/2):0};
+function clean(raw){
+  const flags={},mark=(id,f)=>((flags[id]=flags[id]||new Set()).add(f));
+  const st={fecha:0,nombre:0,dup:0,falt:0,neg:0,inc:0,drop:0};
+  const cs=canon(raw,'sede'),cp=canon(raw,'producto');
+  let rows=[];for(const r0 of raw){const r={...r0,fix:new Set()};
+    const d=parseDate(r.fecha);if(!d){st.drop++;mark(r.id,'fecha');continue}
+    if(d!==String(r.fecha).trim()){st.fecha++;mark(r.id,'fecha');r.fix.add('fecha')}r.fecha=d;
+    for(const [f,c] of [['sede',cs],['producto',cp]]){const v=c[keyOf(r[f])];if(!v){st.drop++;mark(r.id,f);r.skip=1;break}if(v!==r[f]){mark(r.id,f);r.fix.add(f);r.nm=1}r[f]=v}
+    if(r.skip)continue;if(r.nm)st.nombre++;
+    r.unidades=r.unidades===''||r.unidades==null||isNaN(+r.unidades)?null:+r.unidades;r.valor=r.valor===''||r.valor==null||isNaN(+r.valor)?null:+r.valor;rows.push(r)}
+  const seen=new Set();rows=rows.filter(r=>{const k=r.fecha+'|'+r.sede+'|'+r.producto;if(seen.has(k)){st.dup++;mark(r.id,'dup');return false}seen.add(k);return true});
+  const price={};for(const p of new Set(rows.map(r=>r.producto)))price[p]=med(rows.filter(r=>r.producto===p&&r.unidades>0&&r.valor>0).map(r=>r.valor/r.unidades));
+  rows=rows.filter(r=>{const p=price[r.producto];
+    if(r.unidades==null&&r.valor==null){st.drop++;mark(r.id,'unidades');return false}
+    if(r.unidades==null){r.unidades=Math.round(r.valor/p);st.falt++;mark(r.id,'unidades');r.fix.add('unidades')}
+    else if(r.valor==null){r.valor=Math.round(Math.abs(r.unidades)*p);st.falt++;mark(r.id,'valor');r.fix.add('valor')}
+    if(r.unidades<0){r.unidades=-r.unidades;st.neg++;mark(r.id,'unidades');r.fix.add('unidades')}
+    if(r.valor>0&&r.unidades>0&&Math.abs(r.unidades*p-r.valor)/r.valor>.5){r.unidades=Math.round(r.valor/p);st.inc++;mark(r.id,'unidades');r.fix.add('unidades')}
+    return true});
+  rows.sort((a,b)=>a.fecha.localeCompare(b.fecha)||a.sede.localeCompare(b.sede)||a.producto.localeCompare(b.producto));
+  return {rows,st,flags};
+}
+
+/* ---------- estado ---------- */
+let S={};
+function load(raw,label){S={raw,label,res:clean(raw),clean:null};$('#srcLabel').textContent=label;
+  $$('nav.flow a').forEach(a=>a.classList.remove('done'));$('#tblFilter').value='bad';renderDP();route()}
+
+function renderDP(){const r=S.res,done=!!S.clean,bad=Object.keys(r.flags).length,n=S.raw.length;
+  $('#dpTitle').textContent=done?`Limpieza completa: ${num.format(S.clean.length)} registros listos para analizar`:`${num.format(bad)} de ${num.format(n)} ${bad===1?'registro tiene un error que distorsionaría':'registros tienen errores que distorsionarían'} el análisis`;
+  const q=done?1:1-bad/n;$('#qPct').textContent=(q*100).toLocaleString('es-CO',{maximumFractionDigits:1})+' %';
+  $('#qMeter').classList.toggle('good',done);$('#qMeter div').style.width=(q*100)+'%';
+  $('#qNote').textContent=done?'Todos los registros pasaron las reglas de validación.':'Porcentaje de registros sin ningún error detectado.';
+  const L=[['Fechas en formatos distintos, llevadas a año-mes','fecha'],['Nombres de sede o producto mal escritos, unificados','nombre'],['Registros duplicados, eliminados','dup'],['Unidades o valores vacíos, completados con el precio del producto','falt'],['Unidades negativas por error de digitación, corregidas','neg'],['Unidades que no cuadran con el valor vendido, recalculadas','inc'],['Registros sin datos recuperables, descartados','drop']];
+  $('#steps').innerHTML=L.filter(([,k])=>r.st[k]||k!=='drop').map(([t,k])=>`<li class="${done?'ok':''}"><i></i><span>${t}</span><span class="c">${num.format(r.st[k])}</span></li>`).join('');
+  $('#runClean').hidden=done;$('#toPredict').hidden=!done;$('#tblFilter').options[0].text=done?'Solo filas corregidas':'Solo filas con problemas';renderTable()}
+function renderTable(){const done=!!S.clean,only=$('#tblFilter').value==='bad',cols=['fecha','sede','producto','unidades','valor'];
+  let list,cls;
+  if(!done){list=S.raw.filter(r=>!only||S.res.flags[r.id]);cls=(r,c)=>{const f=S.res.flags[r.id];return f&&(f.has(c)||f.has('dup'))?'bad':''}}
+  else{list=S.clean.filter(r=>!only||r.fix.size);cls=(r,c)=>r.fix.has(c)?'fix':''}
+  $('#tblTitle').textContent=done?'Datos limpios':'Datos crudos';
+  $('#tbl').innerHTML='<tr><th class="n">#</th><th>Fecha</th><th>Sede</th><th>Producto</th><th class="n">Unidades</th><th class="n">Valor</th></tr>'+list.slice(0,14).map(r=>`<tr><td class="n">${r.id}</td>${cols.map(c=>{const v=r[c];const isN=c==='unidades'||c==='valor';return `<td class="${isN?'n ':''}${cls(r,c)}">${v==null||v===''?'<i>vacío</i>':isN?(c==='valor'?cop.format(v):num.format(v)):esc(v)}</td>`}).join('')}</tr>`).join('');
+  $('#tblNote').textContent=`Mostrando ${Math.min(14,list.length)} de ${num.format(list.length)} filas. `+(done?'En verde, los datos corregidos.':'En rosa, los datos con errores (las filas completas en rosa están duplicadas).')}
+function runClean(){if(!S.clean){S.clean=S.res.rows;$('nav.flow a[data-v=data-prep]').classList.add('done')}renderDP()}
+$('#runClean').addEventListener('click',runClean);
+$('#tblFilter').addEventListener('change',renderTable);
+$('#toPredict').addEventListener('click',()=>location.hash='predict');
+$$('.cleanGo').forEach(b=>b.addEventListener('click',()=>{runClean();route()}));
+
+/* ---------- utilidades de series ---------- */
+const months=rows=>[...new Set(rows.map(r=>r.fecha))].sort();
+function monthly(rows){const m={};for(const r of rows)m[r.fecha]=(m[r.fecha]||0)+r.valor;return Object.keys(m).sort().map(k=>({ym:k,v:m[k]}))}
+const addM=(ym,k)=>{let y=+ym.slice(0,4),m=+ym.slice(5)-1+k;y+=Math.floor(m/12);m=((m%12)+12)%12;return y+'-'+String(m+1).padStart(2,'0')};
+function fit(series){const n=series.length,y=series.map(p=>Math.log(Math.max(p.v,1))),t=y.map((_,i)=>i);
+  const mt=(n-1)/2,my=y.reduce((a,b)=>a+b,0)/n;let sxy=0,sxx=0;t.forEach(i=>{sxy+=(i-mt)*(y[i]-my);sxx+=(i-mt)**2});
+  const b=sxx?sxy/sxx:0,a=my-b*mt,s=Array(12).fill(0),c=Array(12).fill(0);
+  series.forEach((p,i)=>{const m=+p.ym.slice(5)-1;s[m]+=y[i]-(a+b*i);c[m]++});
+  for(let m=0;m<12;m++)s[m]=c[m]?s[m]/c[m]:0;const sm=s.reduce((x,z)=>x+z,0)/12;for(let m=0;m<12;m++)s[m]-=sm;const a2=a+sm;
+  const res=series.map((p,i)=>y[i]-(a2+b*i+s[+p.ym.slice(5)-1]));const sd=Math.sqrt(res.reduce((x,z)=>x+z*z,0)/Math.max(1,n-13));
+  return {n,a:a2,b,s,sd,last:series[n-1].ym,pred:k=>{const i=n-1+k,m=+addM(series[n-1].ym,k).slice(5)-1,mu=a2+b*i+s[m],w=1.645*sd*Math.sqrt(1+k/n);return {ym:addM(series[n-1].ym,k),v:Math.exp(mu),lo:Math.exp(mu-w),hi:Math.exp(mu+w)}}}}
+function backtest(series){if(series.length<20)return null;const tr=series.slice(0,-6),te=series.slice(-6),m=fit(tr);
+  const mape=te.reduce((x,p,k)=>x+Math.abs(m.pred(k+1).v-p.v)/p.v,0)/6;return mape}
+
+/* ---------- gráficas ---------- */
+const charts=new Map(),ro=new ResizeObserver(es=>es.forEach(e=>charts.get(e.target)?.()));
+function chart(fig,{labels,lines,band,split}){const svg=fig.querySelector('svg');
+  const draw=()=>{const W=fig.clientWidth,H=fig.clientHeight;if(!W)return;const sm=W<520,L=sm?44:62,Rr=12,T=14,B=30,iw=W-L-Rr,ih=H-T-B;
+    const all=lines.flatMap(l=>l.vals).concat(band?band.flatMap(b=>b?[b.lo,b.hi]:[]):[]).filter(v=>v!=null);const mx=Math.max(...all)*1.08||1;
+    const step=10**Math.floor(Math.log10(mx/4)),nice=[1,2,2.5,5,10].map(k=>k*step).find(k=>mx/k<=5)||step*10;
+    const x=i=>L+(labels.length<2?iw/2:i*iw/(labels.length-1)),y=v=>T+ih-v/mx*ih;let g='';
+    for(let v=0;v<=mx;v+=nice)g+=`<line x1="${L}" x2="${W-Rr}" y1="${y(v)}" y2="${y(v)}" stroke="#24496e"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end" fill="#a9c1d8" font-size="12">${(v/1e6).toLocaleString('es-CO',{maximumFractionDigits:1})}M</text>`;
+    const ev=Math.ceil(labels.length/(sm?5:9));labels.forEach((l,i)=>{if(i%ev===0||i===labels.length-1)g+=`<text x="${x(i)}" y="${H-8}" text-anchor="middle" fill="#a9c1d8" font-size="12">${l}</text>`});
+    if(split!=null)g+=`<line x1="${x(split)}" x2="${x(split)}" y1="${T}" y2="${T+ih}" stroke="#a9c1d8" stroke-dasharray="3 4"/><text x="${x(split)+6}" y="${T+12}" fill="#a9c1d8" font-size="12">hoy</text>`;
+    if(band){const idx=band.map((b,i)=>b?i:-1).filter(i=>i>=0);if(idx.length)g+=`<path d="M${idx.map(i=>x(i)+','+y(band[i].hi)).join('L')}L${idx.slice().reverse().map(i=>x(i)+','+y(band[i].lo)).join('L')}Z" fill="rgba(255,92,138,.22)"/>`}
+    for(const l of lines){let d='',on=false;l.vals.forEach((v,i)=>{if(v==null){on=false;return}d+=(on?'L':'M')+x(i)+','+y(v);on=true});
+      g+=`<path d="${d}" fill="none" stroke="${l.c}" stroke-width="2.5" ${l.dash?'stroke-dasharray="6 5"':''} stroke-linejoin="round"/>`;
+      l.vals.forEach((v,i)=>{if(v!=null&&(l.dots||sm===false&&labels.length<=13))g+=`<circle cx="${x(i)}" cy="${y(v)}" r="3" fill="${l.c}"/>`})}
+    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.innerHTML=g};
+  if(!charts.has(fig))ro.observe(fig);charts.set(fig,draw);draw()}
+
+/* ---------- Predict ---------- */
+function renderP(){const prods=[...new Set(S.clean.map(r=>r.producto))].sort(),sel=$('#pProd');
+  if(sel.dataset.k!==prods.join()){sel.innerHTML='<option value="">Todos los productos</option>'+prods.map(p=>`<option>${esc(p)}</option>`).join('');sel.dataset.k=prods.join()}
+  const prod=sel.value,h=+$('#pH').value,series=monthly(S.clean.filter(r=>!prod||r.producto===prod));
+  if(series.length<15){$('#pTitle').textContent='Se necesitan al menos 15 meses de historia para pronosticar';$('#pK').innerHTML='';$('#pTbl').innerHTML='';return}
+  const m=fit(series),fc=Array.from({length:h},(_,k)=>m.pred(k+1)),mape=backtest(series),tot=fc.reduce((a,p)=>a+p.v,0);
+  const prev=fc.map(p=>series.find(s=>s.ym===addM(p.ym,-12))?.v),hasPrev=prev.every(v=>v!=null),pt=hasPrev?prev.reduce((a,b)=>a+b,0):0;
+  $('#pTitle').textContent=`${prod?'Las ventas de '+prod.toLowerCase():'Las ventas totales'} ${hasPrev?(tot>pt?'crecerían':'caerían')+' '+pct(tot/pt-1).replace('+','')+' en los próximos '+h+' meses frente al mismo periodo del año anterior':'se pronostican en '+M(tot)+' para los próximos '+h+' meses'}`;
+  $('#pK').innerHTML=[[M(fc[0].v),'Pronóstico de '+MESL[+fc[0].ym.slice(5)-1]+' '+fc[0].ym.slice(0,4)],[M(tot),'Total próximos '+h+' meses'],[hasPrev?`<span class="${tot>=pt?'up':'down'}">${pct(tot/pt-1)}</span>`:'—','Frente al mismo periodo del año anterior'],[mape==null?'—':((1-mape)*100).toLocaleString('es-CO',{maximumFractionDigits:1})+' %','Precisión en la prueba con los últimos 6 meses reales']]
+    .map(([v,l])=>`<div class="kpi"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+  const labels=series.map(p=>ymLabel(p.ym)).concat(fc.map(p=>ymLabel(p.ym))),n=series.length;
+  chart($('#pFig'),{labels,split:n-1,lines:[{c:'#8fd3ff',vals:series.map(p=>p.v).concat(fc.map(()=>null))},{c:'#ff5c8a',dash:1,dots:1,vals:series.map((p,i)=>i===n-1?p.v:null).concat(fc.map(p=>p.v))}],band:series.map(()=>null).concat(fc)});
+  $('#pTbl').innerHTML='<tr><th>Mes</th><th class="n">Pronóstico</th><th class="n">Mínimo probable</th><th class="n">Máximo probable</th><th class="n">Mismo mes año anterior</th></tr>'+fc.map((p,i)=>`<tr><td>${MESL[+p.ym.slice(5)-1]} ${p.ym.slice(0,4)}</td><td class="n">${cop.format(p.v)}</td><td class="n">${cop.format(p.lo)}</td><td class="n">${cop.format(p.hi)}</td><td class="n">${prev[i]==null?'—':cop.format(prev[i])}</td></tr>`).join('');
+  $('nav.flow a[data-v=predict]').classList.add('done')}
+$('#pProd').addEventListener('change',renderP);$('#pH').addEventListener('change',renderP);
+
+/* ---------- BI ---------- */
+function bars(el,data,hl){const mx=Math.max(...data.map(d=>d[1]))||1,tot=data.reduce((a,d)=>a+d[1],0)||1;
+  el.innerHTML=data.map(([k,v])=>`<div class="b ${k===hl?'hl':''}"><span>${esc(k)}</span><div class="t"><div style="width:${v/mx*100}%"></div></div><span>${M(v)} · ${(v/tot*100).toFixed(0)} %</span></div>`).join('')}
+function group(rows,f){const g={};for(const r of rows)g[r[f]]=(g[r[f]]||0)+r.valor;return Object.entries(g).sort((a,b)=>b[1]-a[1])}
+function renderB(){const years=[...new Set(S.clean.map(r=>r.fecha.slice(0,4)))].sort(),ys=$('#bYear'),ss=$('#bSede'),sedes=[...new Set(S.clean.map(r=>r.sede))].sort();
+  if(ys.dataset.k!==years.join()){ys.innerHTML=years.map(y=>`<option>${y}</option>`).join('');ys.value=years[years.length-1];ys.dataset.k=years.join()}
+  if(ss.dataset.k!==sedes.join()){ss.innerHTML='<option value="">Todas las sedes</option>'+sedes.map(s=>`<option>${esc(s)}</option>`).join('');ss.dataset.k=sedes.join()}
+  const y=ys.value,py=String(+y-1),sede=ss.value,base=S.clean.filter(r=>!sede||r.sede===sede);
+  const cur=base.filter(r=>r.fecha.startsWith(y)),ms=new Set(cur.map(r=>r.fecha.slice(5))),prv=base.filter(r=>r.fecha.startsWith(py)&&ms.has(r.fecha.slice(5)));
+  const sum=a=>a.reduce((x,r)=>x+r.valor,0),u=cur.reduce((x,r)=>x+r.unidades,0),v=sum(cur),pv=sum(prv),gp=group(cur,'producto'),gs=group(S.clean.filter(r=>r.fecha.startsWith(y)),'sede');
+  const per=ms.size<12?` (${MES[Math.min(...[...ms].map(Number))-1]}–${MES[Math.max(...[...ms].map(Number))-1]})`:'';
+  $('#bTitle').textContent=`${sede||'La empresa'} vendió ${M(v)} en ${y}${per}`+(pv?`, ${v>=pv?'un':'una caída del'} ${pct(Math.abs(v/pv-1)).replace('+','')} ${v>=pv?'más':''} que en el mismo periodo de ${py}`:'');
+  $('#bK').innerHTML=[[M(v),'Ventas '+y+per],[pv?`<span class="${v>=pv?'up':'down'}">${pct(v/pv-1)}</span>`:'—','Frente a '+py+(per?' (mismos meses)':'')],[num.format(u),'Unidades vendidas'],[gp[0]?esc(gp[0][0]):'—','Producto líder · '+(gp[0]?(gp[0][1]/v*100).toFixed(0)+' % de las ventas':'')]]
+    .map(([a,b])=>`<div class="kpi"><div class="v">${a}</div><div class="l">${b}</div></div>`).join('');
+  const mm=k=>MES.map((_,i)=>{const ym=k+'-'+String(i+1).padStart(2,'0'),r=base.filter(x=>x.fecha===ym);return r.length?sum(r):null});
+  $('#lgA').textContent=py;$('#lgB').textContent=y;$('#bChartT').textContent='Ventas por mes: '+y+' frente a '+py;
+  chart($('#bFig'),{labels:MES,lines:[{c:'#8fd3ff',vals:mm(py)},{c:'#ff5c8a',vals:mm(y),dots:1}]});
+  bars($('#bProd'),gp);bars($('#bSedeBars'),gs,sede);$('nav.flow a[data-v=bi]').classList.add('done')}
+$('#bYear').addEventListener('change',renderB);$('#bSede').addEventListener('change',renderB);
+
+/* ---------- Story ---------- */
+function renderS(){const rows=S.clean,ser=monthly(rows),n=ser.length;if(n<24){$('#memo').innerHTML='<h2>Se necesitan al menos 24 meses de datos para el informe comparativo.</h2>';return}
+  const last=ser.slice(-12),prev=ser.slice(-24,-12),sum=a=>a.reduce((x,p)=>x+p.v,0),g=sum(last)/sum(prev)-1,from=last[0].ym,to=last[11].ym;
+  const inP=(r,a,b)=>r.fecha>=a&&r.fecha<=b,pf=addM(from,-12),pt=addM(to,-12);
+  const by=(f,a,b)=>Object.fromEntries(group(rows.filter(r=>inP(r,a,b)),f)),pc=by('producto',from,to),pp=by('producto',pf,pt),sc=by('sede',from,to),sp=by('sede',pf,pt);
+  const tot=sum(last),lead=Object.entries(pc).sort((a,b)=>b[1]-a[1])[0],gr=Object.keys(pc).filter(k=>pp[k]).map(k=>[k,pc[k]/pp[k]-1]).sort((a,b)=>b[1]-a[1]);
+  const sg=Object.keys(sc).filter(k=>sp[k]).map(k=>[k,sc[k]/sp[k]-1]).sort((a,b)=>a[1]-b[1]),m=fit(ser),pk=m.s.indexOf(Math.max(...m.s)),lo=m.s.indexOf(Math.min(...m.s));
+  const f3=[1,2,3].map(k=>m.pred(k)),f3t=f3.reduce((a,p)=>a+p.v,0),f3p=f3.map(p=>ser.find(s=>s.ym===addM(p.ym,-12))?.v).reduce((a,b)=>a+(b||0),0),st=S.res.st,fixes=st.fecha+st.nombre+st.dup+st.falt+st.neg+st.inc;
+  const per=`${MESL[+from.slice(5)-1]} de ${from.slice(0,4)} a ${MESL[+to.slice(5)-1]} de ${to.slice(0,4)}`,peakTxt=Math.round((Math.exp(m.s[pk])-1)*100),lowTxt=Math.round((1-Math.exp(m.s[lo]))*100);
+  S.memo={t:`Las ventas ${g>=0?'crecieron':'cayeron'} ${pc1(g)} en el último año, con ${lead[0].toLowerCase()} a la cabeza`,
+    hall:[`De ${per} la empresa vendió ${M(tot)}, ${pc1(g)} ${g>=0?'más':'menos'} que en los 12 meses anteriores.`,
+      `${lead[0]} es el producto líder, con el ${(lead[1]/tot*100).toFixed(0)} % de las ventas. ${gr[0]?`El que más crece es ${gr[0][0].toLowerCase()} (${pct(gr[0][1])}).`:''}`,
+      `${MESL[pk][0].toUpperCase()+MESL[pk].slice(1)} es el mes más fuerte: vende cerca de ${peakTxt} % más que un mes promedio. ${MESL[lo][0].toUpperCase()+MESL[lo].slice(1)} es el más débil, unos ${lowTxt} % por debajo.`,
+      sg[0]?`${sg[0][0]} es la sede con menor crecimiento (${pct(sg[0][1])}), mientras ${sg[sg.length-1][0]} crece ${pc1(sg[sg.length-1][1])}.`:'',
+      `Para los próximos tres meses Predict estima ventas por ${M(f3t)}${f3p?`, ${pct(f3t/f3p-1)} frente al mismo trimestre del año anterior`:''}.`].filter(Boolean),
+    acc:[`Asegurar inventario de ${lead[0].toLowerCase()}${gr[0]&&gr[0][0]!==lead[0]?' y '+gr[0][0].toLowerCase():''} antes de ${MESL[pk]}, cuando la demanda alcanza su punto más alto.`,
+      `Programar promociones en ${MESL[lo]} para compensar la temporada baja.`,
+      sg[0]?`Revisar la estrategia comercial de la sede ${sg[0][0]} y comparar sus precios y surtido con los de ${sg[sg.length-1][0]}.`:'',
+      `Mantener la carga mensual de datos para que el pronóstico se recalibre cada mes.`].filter(Boolean),
+    nota:`Base: ${num.format(rows.length)} registros validados por Data Prep (${num.format(fixes)} correcciones aplicadas). Pronóstico con modelo de tendencia y estacionalidad mensual.`};
+  $('#memo').innerHTML=`<p class="small">Informe ejecutivo · ${esc(S.label)}</p><h2>${S.memo.t}</h2><h3>Lo que dicen los datos</h3><ul>${S.memo.hall.map(x=>`<li>${x}</li>`).join('')}</ul><h3>Qué hacer</h3><ul>${S.memo.acc.map(x=>`<li>${x}</li>`).join('')}</ul><p class="small" style="margin-top:16px">${S.memo.nota}</p>`;
+  $('nav.flow a[data-v=story]').classList.add('done')}
+$('#copy').addEventListener('click',async()=>{const m=S.memo;if(!m)return;const txt=`${m.t}\n\nLo que dicen los datos:\n- ${m.hall.join('\n- ')}\n\nQué hacer:\n- ${m.acc.join('\n- ')}\n\n${m.nota}`;
+  try{await navigator.clipboard.writeText(txt);$('#copy').textContent='Copiado'}catch(e){$('#copy').textContent='No se pudo copiar'}setTimeout(()=>$('#copy').textContent='Copiar informe',1800)});
+
+/* ---------- navegación ---------- */
+const VIEWS=['data-prep','predict','bi','story'];
+function route(){const v=VIEWS.includes(location.hash.slice(1))?location.hash.slice(1):'data-prep';
+  VIEWS.forEach(k=>{$('#v-'+k).hidden=k!==v;const a=$(`nav.flow a[data-v=${k}]`);if(k===v)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+  const ok=!!S.clean;[['predict','#gP','#pBody',renderP],['bi','#gB','#bBody',renderB],['story','#gS','#sBody',renderS]].forEach(([k,g,b,fn])=>{if(k!==v)return;$(g).hidden=ok;$(b).hidden=!ok;if(ok)fn()})}
+window.addEventListener('hashchange',route);
+
+/* ---------- carga de CSV ---------- */
+$('#csv').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{
+  const lines=String(rd.result).replace(/^﻿/,'').split(/\r?\n/).filter(l=>l.trim());const sep=(lines[0].match(/;/g)||[]).length>(lines[0].match(/,/g)||[]).length?';':',';
+  const H=lines[0].split(sep).map(keyOf),need=['fecha','sede','producto','unidades','valor'],ix=need.map(k=>H.indexOf(k));
+  if(ix.some(i=>i<0))throw new Error('Faltan columnas: '+need.filter((k,i)=>ix[i]<0).join(', '));
+  const raw=lines.slice(1).map((l,j)=>{const c=l.split(sep);const nv=v=>{v=String(v??'').replace(/[$\s]/g,'');if(!v)return null;if(/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(v))v=v.replace(/\./g,'').replace(',','.');else v=v.replace(',','.');return isNaN(+v)?null:+v};
+    return {id:j+1,fecha:c[ix[0]],sede:c[ix[1]],producto:c[ix[2]],unidades:nv(c[ix[3]]),valor:nv(c[ix[4]])}});
+  if(raw.length<5)throw new Error('El archivo tiene muy pocas filas.');
+  load(raw,`Fuente: ${f.name} · ${num.format(raw.length)} registros`);$('#csvMsg').textContent='Archivo cargado. Ejecute la limpieza para continuar.';location.hash='data-prep';
+}catch(err){$('#csvMsg').textContent='No se pudo leer el archivo: '+err.message}};rd.readAsText(f,'utf-8');e.target.value=''});
+$('#reset').addEventListener('click',()=>{loadSample();location.hash='data-prep'});
+function loadSample(){load(sample(),'Fuente: Distribuidora La Esquina (ficticia), Tunja · 3 sedes · 5 productos · ene 2024 – sep 2026 · datos de ejemplo');$('#csvMsg').textContent='Formato del CSV: columnas fecha, sede, producto, unidades, valor (separadas por coma o punto y coma).'}
+loadSample();
+}
+</script>
+</body>
+</html>
